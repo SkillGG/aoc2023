@@ -55,7 +55,6 @@ const getSeedMap = (lines: string): null | SeedMapData => {
         return null;
     }
     const seeds = rxSeeds[1].split(" ").map((r) => parseInt(r));
-
     const retAlmanacs: SeedMapData = {
         seeds,
         // the order of steps here is the order that the maps will be executed
@@ -69,11 +68,11 @@ const getSeedMap = (lines: string): null | SeedMapData => {
             h2r: [],
         },
     };
-
+    // get data from file
     for (const k in mapDic) {
         const key = k as keyof typeof mapDic;
         const str = mapDic[key];
-
+        // create regex /${str} map:[\s\n]+((?:\d+(?:\s|$)+)+)(?:\r\n){0,2}/
         const rx = new RegExp(
             `${str} map:[\\s\\n]+((?:\\d+(?:\\s|$)+)+)(?:\\r\\n){0,2}`,
             "ig"
@@ -83,17 +82,14 @@ const getSeedMap = (lines: string): null | SeedMapData => {
             console.error("null", rx, ex);
             continue;
         }
-
         const mapLines = ex[1].trim().split("\r\n");
 
+        // get the number values and create an AlmanacMap
         for (const mapLine of mapLines) {
             const nums = mapLine.split(" ").map((r) => parseInt(r.trim()));
-            retAlmanacs.steps[key].push(
-                new AlmanacMap(nums[0], nums[1], nums[2])
-            );
+            retAlmanacs.steps[key].push(new AlmanacMap(...nums));
         }
     }
-
     return retAlmanacs;
 };
 
