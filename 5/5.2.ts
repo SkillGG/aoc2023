@@ -100,35 +100,45 @@ const getSeedMap = (lines: string): null | SeedMapData => {
 const data = getSeedMap(lines);
 if (!data) throw "Data is empty";
 
-console.time("brute force");
+/** This function takes number and passes it through all Almanacs in a map layer */
+const executeAStep = (
+    step: keyof SeedMapData["steps"],
+    num: number
+): number => {
+    for (const almanac of data.steps[step]) {
+        const mappedNum = almanac.map(num);
+        if (mappedNum) return mappedNum;
+    }
+    return num;
+};
 
-// get all new seed locations
-const seedLocations = data?.seeds.map((m) => {
-    console.log();
-    console.log("number:", m);
-    const executeStep = (
-        almanac: keyof SeedMapData["steps"],
-        num: number
-    ): number => {
-        return (
-            data.steps[almanac].reduce<number | null>(
-                (p, n) => (p ? p : n.map(num)),
-                null
-            ) || num
-        );
-    };
-
-    let ret = m;
-
-    for (const almanac in data.steps) {
-        const key = almanac as keyof SeedMapData["steps"];
-        const rt = executeStep(key, ret);
-        console.log("applying", key, ret, "=>", rt);
+/** This function takes number and passes it through all AlmanacMaps in order */
+const executeAllStepsForANumber = (number: number) => {
+    let ret = number;
+    for (const step in data.steps) {
+        const key = step as keyof SeedMapData["steps"];
+        const rt = executeAStep(key, ret);
         ret = rt;
     }
-
     return ret;
-});
+};
 
-if (seedLocations) console.log(Math.min(...seedLocations));
+console.timeEnd("setup / parse");
+// start timing
+console.time("brute force");
+
+let lowest: number = Infinity;
+
+for (let i = 0; i < data.seeds.length; i += 2) {
+    const place = data.seeds[i];
+    const seednum = data.seeds[i + 1];
+    console.log(place, seednum, (i / data.seeds.length) * 100 + "%");
+
+    for (let seed = place; seed < place + seednum; seed++) {
+        const loc = executeAllStepsForANumber(seed);
+        if (loc < lowest) lowest = loc;
+    }
+}
 console.timeEnd("brute force");
+
+console.log("lowest", lowest);
